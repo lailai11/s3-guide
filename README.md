@@ -1,2 +1,2 @@
-# cloud_castle
-Repo to host cloud development and security
+# s3-secure-transfer-guide
+overview of AWS s3, temporary access and logging

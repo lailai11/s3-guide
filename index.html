@@ -9,12 +9,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Chosen Palette: Calm Tech -->
-    <!-- Application Structure Plan: The SPA is designed as an interactive, single-page dashboard. It starts with a high-level, clickable architecture diagram. Clicking a component smoothly scrolls to a "deep-dive" section that explains that component's role and configuration. This is more user-friendly than a linear document, allowing users to explore components in any order. The structure includes an interactive demo at the end to provide a hands-on feel for how presigned URLs work, solidifying the user's understanding of the core concept. -->
-    <!-- Visualization & Content Choices: 
+    <!-- Application Structure Plan: The SPA is designed as an interactive, single-page dashboard. It starts with a high-level, clickable architecture diagram. Clicking a component smoothly scrolls to a "deep-dive" section that explains that component's role and configuration. A new "Workflow Animation" section visually explains the data flow for upload/download. This is more user-friendly than a linear document, allowing users to explore components in any order. The structure includes an interactive demo at the end to provide a hands-on feel for how presigned URLs work, solidifying the user's understanding of the core concept. -->
+    <!-- Visualization & Content Choices:
         - Architecture Diagram: Recreated using HTML/CSS (Tailwind) instead of an image or SVG for interactivity and responsiveness. Goal: Organize/Inform. Interaction: Click to scroll.
         - Component Features (Encryption, Versioning, etc.): Presented as info cards with icons for quick visual parsing. Goal: Inform.
         - Presigned URL Flow: Explained in a step-by-step process diagram (HTML/CSS) to clarify the sequence. Goal: Explain a process.
         - Logging Comparison: A two-column layout is used to clearly compare S3 Access Logs and CloudTrail. Goal: Compare.
+        - Workflow Animation: Uses HTML/CSS for visual elements and JavaScript to sequence steps and animate data flow (e.g., highlighting paths, moving indicators). Goal: Explain a complex process visually, Engage/Teach.
         - Interactive Demo: Uses HTML form elements and JavaScript to simulate the generation of a temporary access URL, providing a tangible learning experience. Goal: Engage/Teach.
         - NO SVG/Mermaid used. No data charts are needed as the source material is conceptual.
     -->
@@ -32,24 +33,83 @@
             transform: translateY(-4px);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
         }
-        .arrow {
-            position: relative;
-        }
-        .arrow::after {
-            content: '→';
-            position: absolute;
-            font-size: 2rem;
-            color: #9ca3af;
-        }
-        .arrow-down::after {
-            content: '↓';
-        }
         .section-title {
             border-bottom: 2px solid #e5e7eb;
             padding-bottom: 0.5rem;
         }
         html {
             scroll-behavior: smooth;
+        }
+
+        /* Animation specific styles */
+        .workflow-box {
+            border: 2px solid #cbd5e0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background-color: #f0f4f8;
+            font-weight: 600;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 120px; /* Fixed height for boxes */
+        }
+        .workflow-step-description {
+            min-height: 40px; /* Ensure space for description */
+            text-align: center;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+        .arrow-path {
+            position: relative;
+            background-color: #d1d5db; /* Default grey */
+            height: 4px;
+            margin: 0.5rem 0;
+            border-radius: 2px;
+        }
+        .arrow-path-vertical {
+            width: 4px;
+            height: 80px; /* Adjust height as needed */
+            margin: 0 auto;
+            background-color: #d1d5db;
+        }
+        .arrow-path.active {
+            background-color: #4f46e5; /* Active indigo */
+            transition: background-color 0.3s ease-in-out;
+        }
+        .arrow-path-vertical.active {
+            background-color: #4f46e5;
+            transition: background-color 0.3s ease-in-out;
+        }
+        .data-indicator {
+            width: 20px;
+            height: 20px;
+            background-color: #ef4444; /* Red for data flow */
+            border-radius: 50%;
+            position: absolute;
+            top: -8px; /* Center vertically on the path */
+            left: 0;
+            opacity: 0;
+            transition: all 0.5s ease-in-out;
+        }
+        .data-indicator-vertical {
+            width: 20px;
+            height: 20px;
+            background-color: #10b981; /* Green for data flow */
+            border-radius: 50%;
+            position: absolute;
+            left: -8px; /* Center horizontally on the path */
+            top: 0;
+            opacity: 0;
+            transition: all 0.5s ease-in-out;
+        }
+        @keyframes pulse-once {
+            0% { transform: scale(1); box-shadow: 0 0 0 rgba(0,0,0,0); }
+            50% { transform: scale(1.02); box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+            100% { transform: scale(1); box-shadow: 0 0 0 rgba(0,0,0,0); }
+        }
+        .animate-pulse-once {
+            animation: pulse-once 1s ease-out;
         }
     </style>
 </head>
@@ -114,6 +174,69 @@
             </div>
         </section>
 
+        <!-- Workflow Animation Section -->
+        <section id="workflow-animation" class="my-16 p-8 bg-white rounded-xl shadow-md border border-gray-200">
+            <h2 class="text-2xl md:text-3xl font-bold text-center mb-4 text-gray-700 section-title">Secure Transfer Workflow</h2>
+            <p class="text-center text-gray-600 mb-8 max-w-3xl mx-auto">
+                This animation visualizes the step-by-step process of both uploading and downloading files securely using presigned URLs. Follow the flow to understand how data and requests move through the system, ensuring security and temporary access.
+            </p>
+
+            <div class="flex justify-center mb-8 space-x-4">
+                <button id="start-upload-animation" class="bg-indigo-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-150 ease-in-out">
+                    Start Upload Workflow
+                </button>
+                <button id="start-download-animation" class="bg-purple-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition duration-150 ease-in-out">
+                    Start Download Workflow
+                </button>
+                <button id="reset-animation" class="bg-gray-500 text-white py-2 px-4 rounded-lg font-semibold hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-150 ease-in-out">
+                    Reset
+                </button>
+            </div>
+
+            <div class="grid grid-cols-5 items-start gap-4">
+                <!-- User/Frontend Column -->
+                <div class="flex flex-col items-center col-span-1">
+                    <div id="user-frontend-node" class="workflow-box text-blue-800">👤 User / Frontend</div>
+                    <div id="step-desc-0" class="workflow-step-description mt-2"></div>
+                </div>
+
+                <!-- Backend Column -->
+                <div class="flex flex-col items-center col-span-2">
+                    <div id="request-arrow" class="arrow-path w-full relative">
+                        <div id="request-indicator" class="data-indicator" style="left: 0;"></div>
+                    </div>
+                    <div id="step-desc-1" class="workflow-step-description"></div>
+                    <div id="backend-node" class="workflow-box text-purple-800">⚙️ Backend (API Gateway/Lambda)</div>
+                    <div id="backend-s3-arrow-1" class="arrow-path-vertical h-20 relative">
+                        <div id="backend-s3-indicator-1" class="data-indicator-vertical" style="top: 0;"></div>
+                    </div>
+                    <div id="step-desc-2" class="workflow-step-description"></div>
+                    <div id="backend-s3-arrow-2" class="arrow-path-vertical h-20 relative">
+                        <div id="backend-s3-indicator-2" class="data-indicator-vertical" style="top: 0;"></div>
+                    </div>
+                    <div id="step-desc-3" class="workflow-step-description"></div>
+                </div>
+
+                <!-- S3 Column -->
+                <div class="flex flex-col items-center col-span-1">
+                    <div class="h-[120px]"></div> <!-- Placeholder to align with user/frontend -->
+                    <div id="s3-node" class="workflow-box text-green-800">🗄️ AWS S3</div>
+                    <div id="s3-user-arrow" class="arrow-path h-4 relative">
+                         <div id="s3-user-indicator" class="data-indicator" style="left: 0; background-color: #10b981;"></div> <!-- Green for direct S3 access -->
+                    </div>
+                     <div id="step-desc-4" class="workflow-step-description"></div>
+                </div>
+
+                <!-- Optional: Logging Column (Passive) -->
+                <div class="flex flex-col items-center col-span-1">
+                    <div class="h-[120px]"></div> <!-- Placeholder -->
+                     <div class="workflow-box text-gray-500 text-sm">📝 CloudTrail / S3 Logs (Passive)</div>
+                     <div id="step-desc-logging" class="workflow-step-description mt-2">All steps are logged!</div>
+                </div>
+            </div>
+        </section>
+
+
         <!-- Deep Dive Sections -->
         <div class="space-y-16">
             <section id="user-frontend-details" class="p-8 bg-white rounded-xl shadow-md border border-gray-200">
@@ -170,6 +293,12 @@
                     <div class="bg-green-50 p-4 rounded-lg border border-green-200">
                         <h3 class="font-semibold text-lg text-green-700 mb-2">Bucket Versioning</h3>
                         <p class="text-gray-700">Enabled to protect against accidental overwrites or deletions. Every version of a file is preserved, allowing for easy recovery.</p>
+                    KMS)</h3>
+                        <p class="text-gray-700">Files are automatically encrypted the moment they are written to the disk in S3. AWS manages the encryption keys, providing seamless data protection at rest.</p>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                        <h3 class="font-semibold text-lg text-green-700 mb-2">Bucket Versioning</h3>
+                        <p class="text-gray-700">Enabled to protect against accidental overwrites or deletions. Every version of a file is preserved, allowing for easy recovery.</p>
                     </div>
                 </div>
             </section>
@@ -211,9 +340,9 @@
                     <div>
                         <label for="file-select" class="block text-sm font-medium text-gray-700 mb-1">Select a Mock File:</label>
                         <select id="file-select" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="reports/quarterly-earnings.pdf">reports/quarterly-earnings.pdf</option>
-                            <option value="design/project-alpha-logo.png">design/project-alpha-logo.png</option>
-                            <option value="legal/master-service-agreement.docx">legal/master-service-agreement.docx</option>
+                            <option value="hkmux/summary_report.pdf">hkmux/summary_report.pdf</option>
+                            <option value="security/disa_stig_summary.html">security/disa_stig_summary.html</option>
+                            <option value="customer/part_request_form.docx">customer/part_request_form.docx</option>
                         </select>
                     </div>
                     <button id="generate-link-btn" class="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-150 ease-in-out">
@@ -263,18 +392,246 @@
             const urlOutput = document.getElementById('presigned-url-output');
             const fileSelect = document.getElementById('file-select');
 
-            generateBtn.addEventListener('click', () => {
-                const bucketName = 'my-secure-file-transfer-bucket';
-                const region = 'us-east-1';
-                const selectedFile = fileSelect.value;
-                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-                const fakeSignature = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-                const fakeAccessKey = 'ASIA' + Math.random().toString(36).substring(2, 18).toUpperCase();
+            // Animation Elements
+            const startUploadBtn = document.getElementById('start-upload-animation');
+            const startDownloadBtn = document.getElementById('start-download-animation');
+            const resetAnimationBtn = document.getElementById('reset-animation');
 
-                const presignedUrl = `https://${bucketName}.s3.${region}.amazonaws.com/${selectedFile}?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=${fakeAccessKey}%2F${timestamp.substring(0,8)}%2F${region}%2Fs3%2Faws4_request&X-Amz-Date=${timestamp}&X-Amz-Expires=300&X-Amz-SignedHeaders=host&X-Amz-Signature=${fakeSignature}`;
-                
-                urlOutput.textContent = presignedUrl;
+            const userFrontendNode = document.getElementById('user-frontend-node');
+            const backendNode = document.getElementById('backend-node');
+            const s3Node = document.getElementById('s3-node');
+
+            const requestArrow = document.getElementById('request-arrow');
+            const requestIndicator = document.getElementById('request-indicator');
+            const backendS3Arrow1 = document.getElementById('backend-s3-arrow-1');
+            const backendS3Indicator1 = document.getElementById('backend-s3-indicator-1');
+            const backendS3Arrow2 = document.getElementById('backend-s3-arrow-2');
+            const backendS3Indicator2 = document.getElementById('backend-s3-indicator-2');
+            const s3UserArrow = document.getElementById('s3-user-arrow');
+            const s3UserIndicator = document.getElementById('s3-user-indicator');
+
+            const stepDescriptions = [
+                document.getElementById('step-desc-0'),
+                document.getElementById('step-desc-1'),
+                document.getElementById('step-desc-2'),
+                document.getElementById('step-desc-3'),
+                document.getElementById('step-desc-4')
+            ];
+
+            function resetAnimation() {
+                // Reset all indicators
+                requestIndicator.style.opacity = 0;
+                requestIndicator.style.left = '0';
+                backendS3Indicator1.style.opacity = 0;
+                backendS3Indicator1.style.top = '0';
+                backendS3Indicator2.style.opacity = 0;
+                backendS3Indicator2.style.top = '0';
+                s3UserIndicator.style.opacity = 0;
+                s3UserIndicator.style.left = '0';
+
+                // Reset all arrows
+                requestArrow.classList.remove('active');
+                backendS3Arrow1.classList.remove('active');
+                backendS3Arrow2.classList.remove('active');
+                s3UserArrow.classList.remove('active');
+
+                // Reset descriptions
+                stepDescriptions.forEach(desc => desc.textContent = '');
+                userFrontendNode.classList.remove('border-indigo-500', 'border-purple-500', 'border-green-500');
+                backendNode.classList.remove('border-indigo-500', 'border-purple-500', 'border-green-500');
+                s3Node.classList.remove('border-indigo-500', 'border-purple-500', 'border-green-500');
+            }
+
+            // Initial reset
+            resetAnimation();
+
+            async function animateUploadWorkflow() {
+                resetAnimation();
+                let delay = 500;
+
+                // Step 1: User/Frontend initiates upload request
+                stepDescriptions[0].textContent = '1. User selects file, Frontend requests upload URL.';
+                userFrontendNode.classList.add('border-indigo-500');
+                await new Promise(resolve => setTimeout(resolve, delay));
+
+                // Step 2: Request URL to Backend
+                requestArrow.classList.add('active');
+                requestIndicator.style.opacity = 1;
+                requestIndicator.style.left = 'calc(100% - 20px)';
+                stepDescriptions[1].textContent = '2. Request for Presigned Upload URL sent.';
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Step 3: Backend processes request and talks to S3
+                backendNode.classList.add('border-purple-500');
+                stepDescriptions[1].textContent = '3. Backend validates request.';
+                requestIndicator.style.opacity = 0; // Request received
+                await new Promise(resolve => setTimeout(resolve, delay));
+
+                backendS3Arrow1.classList.add('active');
+                backendS3Indicator1.style.opacity = 1;
+                backendS3Indicator1.style.top = 'calc(100% - 20px)';
+                stepDescriptions[2].textContent = '4. Backend requests Presigned URL from S3.';
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Step 4: S3 returns Presigned URL to Backend
+                s3Node.classList.add('border-green-500');
+                stepDescriptions[3].textContent = '5. S3 provides Presigned URL to Backend.';
+                backendS3Indicator1.style.opacity = 0; // URL returned
+                backendS3Arrow1.classList.remove('active'); // Path inactive
+
+                backendS3Arrow2.classList.add('active'); // New path active
+                backendS3Indicator2.style.opacity = 1;
+                backendS3Indicator2.style.top = '0'; // Indicator moves up
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Step 5: Backend returns Presigned URL to Frontend
+                requestArrow.classList.remove('active'); // Path inactive
+                backendS3Indicator2.style.opacity = 0; // Indicator disappeared
+                backendS3Arrow2.classList.remove('active');
+
+                requestArrow.classList.add('active'); // Request path active
+                requestIndicator.style.opacity = 1;
+                requestIndicator.style.left = '0'; // Indicator moves back to frontend
+                requestIndicator.style.backgroundColor = '#10b981'; // Green for URL back
+                stepDescriptions[4].textContent = '6. Backend sends Presigned URL to Frontend.';
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Step 6: Frontend uploads directly to S3
+                userFrontendNode.classList.remove('border-indigo-500'); // Reset highlight
+                backendNode.classList.remove('border-purple-500');
+                requestArrow.classList.remove('active');
+                requestIndicator.style.opacity = 0; // Indicator disappeared
+
+                s3UserArrow.classList.add('active');
+                s3UserIndicator.style.opacity = 1;
+                s3UserIndicator.style.left = 'calc(100% - 20px)'; // Data moves from user to S3
+                stepDescriptions[4].textContent = '7. Frontend uploads file directly to S3 using Presigned URL.';
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                s3Node.classList.remove('border-green-500');
+                s3UserIndicator.style.opacity = 0;
+                s3UserArrow.classList.remove('active');
+                stepDescriptions[4].textContent = 'Upload complete! (All steps logged passively)';
+            }
+
+
+            async function animateDownloadWorkflow() {
+                resetAnimation();
+                let delay = 500;
+
+                // Step 1: User/Frontend initiates download request
+                stepDescriptions[0].textContent = '1. User clicks download, Frontend requests download URL.';
+                userFrontendNode.classList.add('border-indigo-500');
+                await new Promise(resolve => setTimeout(resolve, delay));
+
+                // Step 2: Request URL to Backend
+                requestArrow.classList.add('active');
+                requestIndicator.style.opacity = 1;
+                requestIndicator.style.left = 'calc(100% - 20px)';
+                stepDescriptions[1].textContent = '2. Request for Presigned Download URL sent.';
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Step 3: Backend processes request and talks to S3
+                backendNode.classList.add('border-purple-500');
+                stepDescriptions[1].textContent = '3. Backend validates request.';
+                requestIndicator.style.opacity = 0; // Request received
+                await new Promise(resolve => setTimeout(resolve, delay));
+
+                backendS3Arrow1.classList.add('active');
+                backendS3Indicator1.style.opacity = 1;
+                backendS3Indicator1.style.top = 'calc(100% - 20px)';
+                stepDescriptions[2].textContent = '4. Backend requests Presigned URL from S3.';
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Step 4: S3 returns Presigned URL to Backend
+                s3Node.classList.add('border-green-500');
+                stepDescriptions[3].textContent = '5. S3 provides Presigned URL to Backend.';
+                backendS3Indicator1.style.opacity = 0; // URL returned
+                backendS3Arrow1.classList.remove('active'); // Path inactive
+
+                backendS3Arrow2.classList.add('active'); // New path active
+                backendS3Indicator2.style.opacity = 1;
+                backendS3Indicator2.style.top = '0'; // Indicator moves up
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Step 5: Backend returns Presigned URL to Frontend
+                requestArrow.classList.remove('active'); // Path inactive
+                backendS3Indicator2.style.opacity = 0; // Indicator disappeared
+                backendS3Arrow2.classList.remove('active');
+
+                requestArrow.classList.add('active'); // Request path active
+                requestIndicator.style.opacity = 1;
+                requestIndicator.style.left = '0'; // Indicator moves back to frontend
+                requestIndicator.style.backgroundColor = '#10b981'; // Green for URL back
+                stepDescriptions[4].textContent = '6. Backend sends Presigned URL to Frontend.';
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Step 6: Frontend downloads directly from S3
+                userFrontendNode.classList.remove('border-indigo-500'); // Reset highlight
+                backendNode.classList.remove('border-purple-500');
+                requestArrow.classList.remove('active');
+                requestIndicator.style.opacity = 0; // Indicator disappeared
+
+                s3UserArrow.classList.add('active');
+                s3UserIndicator.style.opacity = 1;
+                s3UserIndicator.style.left = '0'; // Data moves from S3 to user
+                s3UserIndicator.style.backgroundColor = '#10b981'; // Green for data flow
+                stepDescriptions[4].textContent = '7. Frontend downloads file directly from S3 using Presigned URL.';
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                s3Node.classList.remove('border-green-500');
+                s3UserIndicator.style.opacity = 0;
+                s3UserArrow.classList.remove('active');
+                stepDescriptions[4].textContent = 'Download complete! (All steps logged passively)';
+            }
+
+
+            startUploadBtn.addEventListener('click', animateUploadWorkflow);
+            startDownloadBtn.addEventListener('click', animateDownloadWorkflow);
+            resetAnimationBtn.addEventListener('click', resetAnimation);
+
+
+            const apiGatewayEndpoint = 'YOUR_API_GATEWAY_INVOKE_URL_HERE'; // <--- REPLACE THIS
+
+
+            generateBtn.addEventListener('click', async () => {
+                const selectedFileKey = fileSelect.value; // Get the currently selected mock file key
+
+                if (apiGatewayEndpoint === 'YOUR_API_GATEWAY_INVOKE_URL_HERE') {
+                    // This block generates the mock URL if the real endpoint is not configured
+                    const bucketName = 'your-s3-file-transfer-bucket'; // Use a generic name for the mock
+                    const region = 'us-east-1'; // Default region for mock URL
+                    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 15) + 'Z'; // Consistent timestamp for mock
+                    const fakeSignature = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                    const fakeAccessKey = 'ASIA' + Math.random().toString(36).substring(2, 18).toUpperCase();
+
+                    const mockPresignedUrl = `https://${bucketName}.s3.${region}.amazonaws.com/${selectedFileKey}?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=${fakeAccessKey}%2F${timestamp.substring(0,8)}%2F${region}%2Fs3%2Faws4_request&X-Amz-Date=${timestamp}&X-Amz-Expires=300&X-Amz-SignedHeaders=host&X-Amz-Signature=${fakeSignature}`;
+
+                    urlOutput.textContent = mockPresignedUrl;
+                    demoOutput.style.display = 'block';
+                    return;
+                }
+
+                urlOutput.textContent = 'Generating real presigned URL...';
                 demoOutput.style.display = 'block';
+
+                try {
+                    const response = await fetch(`${apiGatewayEndpoint}/presigned-url?key=${encodeURIComponent(selectedFileKey)}`);
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(`Error from backend: ${errorData.message || response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    const realPresignedUrl = data.presignedUrl;
+
+                    urlOutput.textContent = realPresignedUrl;
+
+                } catch (error) {
+                    console.error('Failed to get presigned URL:', error);
+                    urlOutput.textContent = `Error generating link: ${error.message}. Check browser console and Lambda logs.`;
+                }
             });
         });
     </script>

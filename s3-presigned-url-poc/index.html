@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Guide: Secure S3 File Transfer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)">
+    <link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
+    <link href="[https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap)" rel="stylesheet">
     <!-- Chosen Palette: Calm Tech -->
     <!-- Application Structure Plan: The SPA is designed as an interactive, single-page dashboard. The Architecture Section now features a fully revised diagram showing the multi-bucket (Incoming, Trusted, Quarantine) flow with the File Processor and Auth Service. Clicking components scrolls to deep-dive sections. The Workflow Animation visually details Request-Upload, Direct Upload (with integrity check and conditional routing), and Download processes. This is more user-friendly than a linear document, allowing users to explore components in any order. The structure includes an interactive demo with two main parts: a "Request File Upload" form (simulated backend workflow initiation) and a "Generate Temporary Download Link" feature, providing a tangible feel for how presigned URLs work for both upload (to an Incoming bucket) and download (from a Trusted bucket), solidifying the user's understanding of the core concept. The workflow animation has been updated and debugged to reflect the full request-to-upload process, file processing, and ensure correct visual flow, including user authentication. -->
     <!-- Visualization & Content Choices:
@@ -284,7 +284,7 @@
                 <div class="flex flex-col items-center col-span-1">
                     <div class="h-[120px]"></div> <!-- Placeholder for auth-service-node -->
                     <div class="h-[80px]"></div> <!-- Placeholder for auth-backend-arrow -->
-                    <div id="incoming-s3-node" class="workflow-box text-green-800">📥 Incoming S3 Bucket</div> <!-- Updated icon -->
+                    <div id="incoming-s3-node" class="workflow-box text-green-800">📥 Incoming S3 Bucket</div>
                     <div id="incoming-processor-arrow" class="arrow-path-vertical h-20 relative">
                         <div id="incoming-processor-indicator" class="data-indicator-vertical" style="top: 0; background-color: #6d28d9;"></div>
                     </div>
@@ -758,6 +758,7 @@
                 await new Promise(resolve => setTimeout(resolve, delay));
 
                 // Step 2: Direct Upload to Incoming S3
+                // Move indicator from user to incoming S3 node
                 if (s3UserArrow) s3UserArrow.classList.add('active');
                 if (s3UserIndicator) {
                     s3UserIndicator.style.opacity = 1;
